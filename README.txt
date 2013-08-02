@@ -1,15 +1,7 @@
-Reap-Computer.ps1
+PrepDeploy.ps1
 
-Written by pfaffle (8/24/12)
+Prepares a computer to be deployed in the CAT environment by either removing it from our records entirely (if it is getting a new name) or by simply removing it from Active Directory so that it can be deployed fresh without inheriting any prior configuration state.
 
-Removes a computer from Active Directory and SCCM in preparation for being re-deployed.
-
-It takes the following steps:
-1. Finds computer in AD if it exists.
-2. Dumps current group membership to a file.
-3. Deletes the Computer object from AD.
-4. Deletes the Computer object(s) from SCCM.
-
-Usage: .\PrepDeploy.ps1 [computername],[computername],[...]
-
-This script needs a lot of work ... sorry for how ugly it is. It is functional though, mostly.
+Usage:
+    PrepDeploy.ps1 -Destroy [computername],[computername],[...]
+    PrepDeploy.ps1 -Redeploy [computername],[computername],[...]
