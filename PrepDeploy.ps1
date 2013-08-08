@@ -1,14 +1,13 @@
 ﻿<#
     .Synopsis
-    Removes a computer from AD and SCCM, if desired
+    Removes a computer from AD and SCCM, if desired.
 
     .Description
-    Passing the -Destroy flag removes the given computer from both AD and SCCM and creates a textfile with the groups 
-    the object was a member of.  Passing the -Redeploy flag only deletes the object from AD and creates the same textfile.
-  
+    Passing the -Destroy flag creates a text file with the groups the computer object was a member of and then removes the object from both AD and SCCM. Passing the -Redeploy flag creates a text file with the groups the computer object was a member of and then deletes the object only from AD.
+
     .Example
-    .\prepdeploy bulbasaur -Destroy
-    Succesfull output will be:
+    PrepDeploy.ps1 bulbasaur -Destroy
+    Succesful output will be:
     Searching for bulbasaur in Active Directory... Success!
     Retrieving current group membership... Success!
     Storing group membership... Success!
@@ -16,8 +15,8 @@
     Removing from SCCM... Success!
 
     .Example
-    .\prepdeploy bulbasaur -Redeploy
-    Succesfull output will be:
+    PrepDeploy.ps1 bulbasaur -Redeploy
+    Succesful output will be:
     Searching for bulbasaur in Active Directory... Success!
     Retrieving current group membership... Success!
     Storing group membership... Success!
@@ -30,16 +29,16 @@ param(
     [switch]$Redeploy
 )
 
-Import-Module ActiveDirectory 
+Import-Module ActiveDirectory
 $SCCMServer = "Itzamna"
 $SiteName = "KAT"
-$LogFilePath = "\\normandy\c$\temp\Groups"
+$LogFilePath = "\\idunn\installedsoftware\groups"
 $Success = 'Write-Host -ForegroundColor Green "Success!"'
 $Failed = 'Write-Host -ForegroundColor Red "Failed!"'
 
 ## This function tests if the computer exsists in Active Directory.
-## If the computer exists then it will return the computer object. 
-## If the computer doesn't exists in active directory then returns null.   
+## If the computer exists then it will return the computer object.
+## If the computer doesn't exist in Active Directory then the function returns $null.
 function test-ADComp{
     Write-Host -NoNewline "Searching for $CompName in Active Directory... "
     try{
@@ -53,7 +52,7 @@ function test-ADComp{
 }
 
 ## This function stores list of AD groups in a text file to a specified location.
-## Inputs: It takes a object with the list of AD groups. 
+## Inputs: It takes an object with the list of AD groups. 
 ## Outputs: Stores the list to a text file. 
 function store-GroupMembership{
 param(
@@ -68,8 +67,8 @@ param(
     }
 }
 
-## This Function retrieves what AD groups the computer is apart of. 
-## Input: AD Computer object. 
+## This function retrieves what AD groups the computer is a member of. 
+## Input: AD Computer object.
 ## Output: Calls store-GroupMembership to store the group list.
 function get-GroupMembership{
     param(
@@ -83,12 +82,11 @@ function get-GroupMembership{
     }catch{
         Write-Host -ForegroundColor Red "Couldn't Get Group Membersheip"
         Write-Host -ForegroundColor Red "Exiting Script."
-
     }
 }
 
-## This Function deletes the computer from AD.
-## Input: AD Computer Object 
+## This function deletes the computer from AD.
+## Input: AD Computer Object
 ## Output: Will out Success and Failed. 
 function remove-ComputerAD{
     param(
@@ -140,7 +138,7 @@ Function remove-ComputerSCCM{
         }
         else
         {
-            write-host -ForegroundColor Red "Doesn't Exist"
+            Write-Host -ForegroundColor Red "Doesn't Exist"
         }
     }catch{
         Invoke-Expression $failed
@@ -149,7 +147,7 @@ Function remove-ComputerSCCM{
 
 if (($Destroy -eq $True) -and ($Redeploy -eq $True))
 {
-    write-host -ForegroundColor Red "Both Destroy and Redeploy can't be selected together, please select only one"
+    Write-Host -ForegroundColor Red "Both Destroy and Redeploy can't be selected together, please select only one."
 }
 
 elseif ($Destroy -eq $True)
@@ -173,7 +171,7 @@ elseif ($Redeploy -eq $True)
 
 else
 {
-    write-host -ForegroundColor Red "Please specify flag:"
-    write-host -ForegroundColor Red "-Destory if you want to delete from AD and SCCM"
-    write-host -ForegroundColor Red "-Redeploy if you want to delete from AD only"
+    Write-Host -ForegroundColor Red "Please specify flag:"
+    Write-Host -ForegroundColor Red "-Destroy if you want to delete from AD and SCCM"
+    Write-Host -ForegroundColor Red "-Redeploy if you want to delete from AD only"
 }
