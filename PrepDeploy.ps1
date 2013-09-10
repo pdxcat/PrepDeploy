@@ -119,7 +119,7 @@ function remove-ComputerAD{
 
 
 ## This Function deletes the computer from SCCM
-Function remove-ComputerSCCM{
+function remove-ComputerSCCM{
     Write-Host -NoNewline "Removing from SCCM... "
     try {
 		# Find all instances (even 'Obselete' and non-'Active' instances)
@@ -145,6 +145,28 @@ Function remove-ComputerSCCM{
     }
 }
 
+#This function removes the computer object from the ePo sever
+#Many thanks to the people here https://community.mcafee.com/thread/42284
+#whose code is a very big influence on the code in this function
+function remove-ePo{
+   #Allows server certificate validation
+   [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+
+   #Sets the name of the server and port
+   $epoServer="https://asgard:8443"
+   #Asks for ePo credentials and saves as variables
+   $Credential=get-credential -Credential $null
+   $epoUser=$Credential.GetNetworkCredential().username
+   $epoPassword=$Credential.GetNetworkCredential().password
+
+   #Creates WebClient to pass commands through
+   $wc=new-object System.net.WebClient
+   $wc.Credentials = new-object System.Net.NetworkCredential -ArgumentList ($epoUser, $epoPassword)
+
+   #Passes the computer name to the delete command
+   $wc.DownloadString("$epoServer/remote/system.delete?names=$CompName")
+}
+
 if (($Destroy -eq $True) -and ($Redeploy -eq $True))
 {
     Write-Host -ForegroundColor Red "Both Destroy and Redeploy can't be selected together, please select only one."
@@ -158,6 +180,7 @@ elseif ($Destroy -eq $True)
         remove-ComputerAD $ADObject
     }
     remove-ComputerSCCM
+    remove-ePo
 }
 elseif ($Redeploy -eq $True)
 {
@@ -167,6 +190,7 @@ elseif ($Redeploy -eq $True)
         remove-ComputerAD $ADObject
   
     }
+    remove-ePo
 }
 
 else
