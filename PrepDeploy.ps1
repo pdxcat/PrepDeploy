@@ -31,6 +31,7 @@ param(
 
 Import-Module ActiveDirectory
 $SCCMServer = "Itzamna"
+$epoServer="https://asgard:8443"
 $SiteName = "KAT"
 $LogFilePath = "\\idunn\installedsoftware\groups"
 $Success = 'Write-Host -ForegroundColor Green "Success!"'
@@ -152,8 +153,6 @@ function remove-ePo{
    #Allows server certificate validation
    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 
-   #Sets the name of the server and port
-   $epoServer="https://asgard:8443"
    #Asks for ePo credentials and saves as variables
    $Credential=get-credential -Credential $null
    $epoUser=$Credential.GetNetworkCredential().username
