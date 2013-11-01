@@ -30,6 +30,7 @@ param(
 )
 
 Import-Module ActiveDirectory
+Import-Module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
 $SCCMServer = "Itzamna"
 $epoServer="https://asgard:8443"
 $SiteName = "KAT"
@@ -154,7 +155,7 @@ function remove-ePo{
    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
 
    #Asks for ePo credentials and saves as variables
-   $Credential=get-credential -Credential $null
+   $Credential=Get-Credential -Message "Enter ePO Credentials:"
    $epoUser=$Credential.GetNetworkCredential().username
    $epoPassword=$Credential.GetNetworkCredential().password
 
@@ -164,6 +165,14 @@ function remove-ePo{
 
    #Passes the computer name to the delete command
    $wc.DownloadString("$epoServer/remote/system.delete?names=$CompName")
+}
+
+#This function clears the Required PXE Deployments on the Computer object
+#in SCCM, so that it can initiate a new task sequence deployment.
+function clear-PXE{
+    Push-Location "${SiteName}:"
+    Clear-CMPxeDeployment -DeviceName $CompName
+    Pop-Location
 }
 
 if (($Destroy -eq $True) -and ($Redeploy -eq $True))
@@ -187,7 +196,7 @@ elseif ($Redeploy -eq $True)
     if($ADObject -ne $null){
         get-GroupMembership $ADObject
         remove-ComputerAD $ADObject
-  
+        clear-PXE  
     }
     remove-ePo
 }
