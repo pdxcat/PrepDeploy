@@ -37,7 +37,6 @@ if ([IntPtr]::size -eq 4) {
     Import-Module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
 } else{
     $Is64Bit = $true
-    write-host $Is64Bit
 }
 $SCCMServer = "Itzamna"
 $epoServer="https://asgard:8443"
