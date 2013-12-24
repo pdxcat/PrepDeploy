@@ -29,14 +29,31 @@ param(
     [switch]$Redeploy
 )
 
+$Is64Bit = $false
+
 Import-Module ActiveDirectory
-Import-Module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+## Only import this module if the shell is 32-bit
+if ([IntPtr]::size -eq 4) {
+    Import-Module "C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1"
+} else{
+    $Is64Bit = $true
+}
 $SCCMServer = "Itzamna"
 $epoServer="https://asgard:8443"
 $SiteName = "KAT"
 $LogFilePath = "\\idunn\installedsoftware\groups"
 $Success = 'Write-Host -ForegroundColor Green "Success!"'
 $Failed = 'Write-Host -ForegroundColor Red "Failed!"'
+
+## Test whether the current shell is 64-bit or 32-bit.
+## Test the size of an Int Pointer for backwards compatability
+function test-32Bit{
+    if ([IntPtr]::size -eq 4){
+        return $true
+    } else{
+        return $false
+    }
+}
 
 ## This function tests if the computer exsists in Active Directory.
 ## If the computer exists then it will return the computer object.
@@ -170,9 +187,11 @@ function remove-ePo{
 #This function clears the Required PXE Deployments on the Computer object
 #in SCCM, so that it can initiate a new task sequence deployment.
 function clear-PXE{
-    Push-Location "${SiteName}:"
-    Clear-CMPxeDeployment -DeviceName $CompName
-    Pop-Location
+    & $env:systemroot\SysWOW64\WindowsPowerShell\v1.0\powershell.exe `
+        "Import-Module 'C:\Program Files (x86)\Microsoft Configuration Manager\AdminConsole\bin\ConfigurationManager.psd1'; `
+        Push-Location ${SiteName}:; `
+        Clear-CMPxeDeployment -DeviceName $CompName; ` 
+        Pop-Location;"
 }
 
 if (($Destroy -eq $True) -and ($Redeploy -eq $True))
@@ -187,8 +206,8 @@ elseif ($Destroy -eq $True)
         get-GroupMembership $ADObject
         remove-ComputerAD $ADObject
     }
-    remove-ComputerSCCM
-    remove-ePo
+    remove-ComputerSCCM;
+    remove-epo
 }
 elseif ($Redeploy -eq $True)
 {
@@ -196,7 +215,7 @@ elseif ($Redeploy -eq $True)
     if($ADObject -ne $null){
         get-GroupMembership $ADObject
         remove-ComputerAD $ADObject
-        clear-PXE  
+        clear-PXE
     }
     remove-ePo
 }
