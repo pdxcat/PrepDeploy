@@ -168,20 +168,30 @@ function remove-ComputerSCCM{
 #Many thanks to the people here https://community.mcafee.com/thread/42284
 #whose code is a very big influence on the code in this function
 function remove-ePo{
-   #Allows server certificate validation
-   [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+    #Allows server certificate validation
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}
+    $passed = $false
+    while ($passed -eq $false) {
+        #Asks for ePo credentials and saves as variables
+        $Credential=Get-Credential -Message "Enter ePO Credentials:"
+        $epoUser=$Credential.GetNetworkCredential().username
+        $epoPassword=$Credential.GetNetworkCredential().password
 
-   #Asks for ePo credentials and saves as variables
-   $Credential=Get-Credential -Message "Enter ePO Credentials:"
-   $epoUser=$Credential.GetNetworkCredential().username
-   $epoPassword=$Credential.GetNetworkCredential().password
+        #Creates WebClient to pass commands through
+        $wc=new-object System.net.WebClient
+        $wc.Credentials = new-object System.Net.NetworkCredential -ArgumentList ($epoUser, $epoPassword)
 
-   #Creates WebClient to pass commands through
-   $wc=new-object System.net.WebClient
-   $wc.Credentials = new-object System.Net.NetworkCredential -ArgumentList ($epoUser, $epoPassword)
-
-   #Passes the computer name to the delete command
-   $wc.DownloadString("$epoServer/remote/system.delete?names=$CompName")
+        #Passes the computer name to the delete command, loops if credentials are entered incorrectly
+        $passed = $true
+        try {
+            $wc.DownloadString("$epoServer/remote/system.delete?names=$CompName")
+        }
+        catch [system.management.automation.methodinvocationexception] {
+            $error[0]
+            Write-Host "Username or password incorrect"
+            $passed = $false
+        }
+    }
 }
 
 #This function clears the Required PXE Deployments on the Computer object
